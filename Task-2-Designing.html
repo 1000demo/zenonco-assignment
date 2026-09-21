@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doctors — Admin</title>
+<style>
+  :root {
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6a63;
+  --text-muted: #9a9990;
+  --border: #e4e2da;
+  --surface: #ffffff;
+  --surface-muted: #f7f6f2;
+  --page-bg: #f0efe9;
+  --accent: #1f3a5f;
+  --accent-hover: #17293f;
+  --success-bg: #e6f4ea;
+  --success-text: #1e7a3d;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--page-bg);
+  color: var(--text-primary);
+}
+
+/* ---------- layout: sidebar + main content ---------- */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #151b2b;
+  color: #ffffff;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 16px;
+  padding: 0 22px;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.nav-list li {
+  margin: 0;
+}
+
+.nav-list a {
+  display: block;
+  padding: 10px 22px;
+  font-size: 14px;
+  color: #b7bccb;
+  text-decoration: none;
+}
+
+.nav-list a:hover {
+  color: #ffffff;
+}
+
+.nav-list a.active {
+  background: #232c44;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.logout-btn {
+  margin: 16px 22px 0;
+  width: calc(100% - 44px);
+  background: transparent;
+  border: 1px solid #3a4260;
+  color: #ffffff;
+}
+
+.logout-btn:hover {
+  background: #232c44;
+}
+
+.page {
+  flex: 1;
+  padding: 40px 20px;
+  min-width: 0;
+}
+
+.card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* ---------- header ---------- */
+.card-header {
+  padding: 20px 24px 0;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+}
+
+.search-box svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-muted);
+  fill: none;
+  stroke-width: 2;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 12px 10px 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+#cityFilter {
+  width: 150px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+}
+
+.tabs {
+  display: flex;
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 10px 2px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  color: var(--text-primary);
+  font-weight: 500;
+  border-bottom-color: var(--text-primary);
+}
+
+/* ---------- rows ---------- */
+.rows-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.doc-row:hover {
+  background: var(--surface-muted);
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e6eef6;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.avatar-lg {
+  width: 52px;
+  height: 52px;
+  font-size: 16px;
+}
+
+.row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.row-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pill {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.pill.active {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.pill.inactive {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+.chevron {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-muted);
+  fill: none;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
+/* ---------- pagination ---------- */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+#pageSizeSelect {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--surface-muted);
+}
+
+.btn svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-block {
+  width: 100%;
+  margin-top: 24px;
+  padding: 10px;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+}
+
+.icon-btn:hover {
+  background: var(--surface-muted);
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--text-primary);
+  fill: none;
+  stroke-width: 2;
+}
+
+.icon-btn.small svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---------- drawer ---------- */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 20;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.overlay.visible {
+  display: flex;
+}
+
+.drawer {
+  width: 360px;
+  max-width: 90vw;
+  background: var(--surface);
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.drawer-eyebrow {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.drawer-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.detail-name {
+  font-weight: 600;
+  font-size: 16px;
+  margin: 0;
+}
+
+.detail-code {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+.field-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 13px;
+}
+
+.field-label {
+  color: var(--text-secondary);
+}
+
+.field-value {
+  margin: 2px 0 0;
+}
+
+.mobile-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- edit mode ---------- */
+.edit-field {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.edit-field input,
+.edit-field select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+.edit-field-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.edit-field-inline select {
+  width: 130px;
+  margin-top: 0;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.edit-actions .btn {
+  flex: 1;
+  padding: 9px;
+}
+
+.hidden {
+  display: none !important;
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <p class="sidebar-title">Doctor Admin</p>
+    <ul class="nav-list">
+      <li><a href="#">Dashboard</a></li>
+      <li><a href="#">Languages</a></li>
+      <li><a href="#">Testimonials</a></li>
+      <li><a href="#">Case Studies</a></li>
+      <li><a href="#">Doctor Feedback</a></li>
+      <li><a href="#">Education</a></li>
+      <li><a href="#" class="active">Doctors</a></li>
+      <li><a href="#">Leaderboard</a></li>
+      <li><a href="#">Referrals</a></li>
+      <li><a href="#">Notifications</a></li>
+    </ul>
+    <button class="btn logout-btn">Logout</button>
+  </nav>
+
+  <div class="page">
+  <div class="card">
+
+    <div class="card-header">
+      <div class="title-row">
+        <h1>Doctors</h1>
+        <button class="btn btn-primary" id="addDoctorBtn">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Add doctor
+        </button>
+      </div>
+
+      <div class="search-row">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" placeholder="Search by name, city or code">
+        </div>
+        <select id="cityFilter">
+          <option value="">All cities</option>
+          <option value="Varanasi">Varanasi</option>
+          <option value="Jaunpur">Jaunpur</option>
+          <option value="Azamgarh">Azamgarh</option>
+        </select>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="all">All doctors</div>
+        <div class="tab" data-tab="referrers">Top referrers</div>
+      </div>
+    </div>
+
+    <div id="rowsWrap" class="rows-wrap"></div>
+
+    <div class="pagination">
+      <span id="countLabel">Showing 1-6 of 392</span>
+      <select id="pageSizeSelect">
+        <option>25 per page</option>
+        <option>50 per page</option>
+        <option>100 per page</option>
+      </select>
+    </div>
+
+  </div>
+  </div>
+
+</div>
+
+<!-- Details drawer -->
+<div class="overlay" id="drawerOverlay">
+  <div class="drawer">
+    <div class="drawer-head">
+      <span class="drawer-eyebrow">Doctor details</span>
+      <button class="icon-btn" id="closeDrawer" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="drawer-profile">
+      <div class="avatar avatar-lg" id="detailAvatar"></div>
+      <div>
+        <p class="detail-name" id="detailName"></p>
+        <p class="detail-code" id="detailCode"></p>
+      </div>
+    </div>
+
+    <!-- View mode -->
+    <div id="viewMode">
+      <div class="field-list">
+        <div class="field">
+          <span class="field-label">Specialization</span>
+          <p class="field-value" id="v-spec"></p>
+        </div>
+        <div class="field">
+          <span class="field-label">City</span>
+          <p class="field-value" id="v-city"></p>
+        </div>
+        <div class="field">
+          <span class="field-label">Mobile</span>
+          <p class="field-value mobile-row">
+            <span id="v-mobile-masked">•••• •••• ••</span>
+            <span id="v-mobile-full" class="hidden"></span>
+            <button class="icon-btn small" id="toggleMobile" aria-label="Reveal mobile number">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </p>
+        </div>
+        <div class="field">
+          <span class="field-label">Email</span>
+          <p class="field-value" id="v-email"></p>
+        </div>
+        <div class="field">
+          <span class="field-label">Joined</span>
+          <p class="field-value" id="v-joined"></p>
+        </div>
+        <div class="field">
+          <span class="field-label">Doctors referred</span>
+          <p class="field-value" id="v-referred"></p>
+        </div>
+        <div class="field">
+          <span class="field-label">Status</span>
+          <p class="field-value"><span class="pill" id="v-status"></span></p>
+        </div>
+      </div>
+      <button class="btn btn-block" id="editBtn">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Edit details
+      </button>
+    </div>
+
+    <!-- Edit mode -->
+    <div id="editMode" class="hidden">
+      <label class="edit-field">Specialization
+        <input type="text" id="e-spec">
+      </label>
+      <label class="edit-field">City
+        <input type="text" id="e-city">
+      </label>
+      <label class="edit-field">Mobile
+        <input type="text" id="e-mobile">
+      </label>
+      <label class="edit-field">Email
+        <input type="text" id="e-email">
+      </label>
+      <label class="edit-field edit-field-inline">Status
+        <select id="e-status">
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </label>
+      <div class="edit-actions">
+        <button class="btn" id="cancelEdit">Cancel</button>
+        <button class="btn btn-primary" id="saveEdit">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Sample data ----
+// Replace this with data fetched from your API/database.
+const doctors = [
+  { name: "Dr RP Singh", code: "ZH336942", city: "Purani bazar, Jaunpur", spec: "Cardiologist", mobile: "98765 43210", email: "rp.singh@clinic.com", joined: "12 Jan 2024", referred: 4, active: true },
+  { name: "Rishi Keshari", code: "ZH149069", city: "Varanasi", spec: "Orthopedic", mobile: "91234 56780", email: "rishi.k@clinic.com", joined: "03 Mar 2024", referred: 1, active: true },
+  { name: "Dr Wasim", code: "ZH234617", city: "Jaunpur", spec: "General physician", mobile: "90000 11122", email: "dr.wasim@clinic.com", joined: "22 Jun 2024", referred: 2, active: true },
+  { name: "Arpit Maurya", code: "ZH336940", city: "Purani bazar, Jaunpur", spec: "Dermatologist", mobile: "93456 78901", email: "arpit.m@clinic.com", joined: "14 Aug 2024", referred: 0, active: true },
+  { name: "Dr Pawan Kumar Maurya", code: "ZH336943", city: "Begumganj chungi, Jaunpur", spec: "Pediatrician", mobile: "97654 32109", email: "pawan.k@clinic.com", joined: "05 Sep 2024", referred: 0, active: true },
+  { name: "Dr Saurabh Singh", code: "ZH336941", city: "Bhira market, Azamgarh", spec: "ENT specialist", mobile: "96543 21098", email: "saurabh.s@clinic.com", joined: "19 Oct 2024", referred: 1, active: false },
+];
+
+const rowsWrap = document.getElementById("rowsWrap");
+const overlay = document.getElementById("drawerOverlay");
+const viewMode = document.getElementById("viewMode");
+const editMode = document.getElementById("editMode");
+const searchInput = document.getElementById("searchInput");
+const cityFilter = document.getElementById("cityFilter");
+const countLabel = document.getElementById("countLabel");
+
+let mobileRevealed = false;
+let current = null; // the doctor object currently open in the drawer
+
+// ---- Helpers ----
+function initials(name) {
+  return name.replace(/^Dr\.?\s?/i, "").split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+}
+
+function rowHtml(doc, index) {
+  return `
+    <div class="doc-row" data-index="${index}">
+      <div class="avatar">${initials(doc.name)}</div>
+      <div class="row-text">
+        <p class="row-name">${doc.name}</p>
+        <p class="row-sub">${doc.spec} &middot; ${doc.city}</p>
+      </div>
+      <span class="pill ${doc.active ? "active" : "inactive"}">${doc.active ? "Active" : "Inactive"}</span>
+      <svg class="chevron" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+  `;
+}
+
+// ---- Render the list, optionally filtered by search text / city ----
+function renderRows() {
+  const query = searchInput.value.trim().toLowerCase();
+  const city = cityFilter.value;
+
+  const filtered = doctors
+    .map((doc, index) => ({ doc, index })) // keep original index so edits map back correctly
+    .filter(({ doc }) => {
+      const matchesQuery = !query ||
+        doc.name.toLowerCase().includes(query) ||
+        doc.city.toLowerCase().includes(query) ||
+        doc.code.toLowerCase().includes(query);
+      const matchesCity = !city || doc.city.includes(city);
+      return matchesQuery && matchesCity;
+    });
+
+  rowsWrap.innerHTML = filtered.map(({ doc, index }) => rowHtml(doc, index)).join("");
+  countLabel.textContent = `Showing 1-${filtered.length} of ${doctors.length}`;
+
+  document.querySelectorAll(".doc-row").forEach(row => {
+    row.addEventListener("click", () => openDrawer(doctors[Number(row.dataset.index)]));
+  });
+}
+
+searchInput.addEventListener("input", renderRows);
+cityFilter.addEventListener("change", renderRows);
+
+// ---- Tabs (wire up your "Top referrers" view here if needed) ----
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    // TODO: swap rowsWrap content for the "referrers" tab if you build that view
+  });
+});
+
+// ---- Open the details drawer for a given doctor ----
+function openDrawer(doc) {
+  current = doc;
+  mobileRevealed = false;
+
+  document.getElementById("detailAvatar").textContent = initials(doc.name);
+  document.getElementById("detailName").textContent = doc.name;
+  document.getElementById("detailCode").textContent = doc.code;
+  document.getElementById("v-spec").textContent = doc.spec;
+  document.getElementById("v-city").textContent = doc.city;
+  document.getElementById("v-mobile-full").textContent = doc.mobile;
+  document.getElementById("v-email").textContent = doc.email;
+  document.getElementById("v-joined").textContent = doc.joined;
+  document.getElementById("v-referred").textContent = doc.referred;
+
+  const statusEl = document.getElementById("v-status");
+  statusEl.textContent = doc.active ? "Active" : "Inactive";
+  statusEl.className = "pill " + (doc.active ? "active" : "inactive");
+
+  document.getElementById("v-mobile-masked").classList.remove("hidden");
+  document.getElementById("v-mobile-full").classList.add("hidden");
+
+  viewMode.classList.remove("hidden");
+  editMode.classList.add("hidden");
+  overlay.classList.add("visible");
+}
+
+document.getElementById("closeDrawer").addEventListener("click", () => {
+  overlay.classList.remove("visible");
+});
+
+// close when clicking the dark backdrop (but not the drawer itself)
+overlay.addEventListener("click", (e) => {
+  if (e.target === overlay) overlay.classList.remove("visible");
+});
+
+// ---- Reveal / hide mobile number ----
+document.getElementById("toggleMobile").addEventListener("click", () => {
+  mobileRevealed = !mobileRevealed;
+  document.getElementById("v-mobile-masked").classList.toggle("hidden", mobileRevealed);
+  document.getElementById("v-mobile-full").classList.toggle("hidden", !mobileRevealed);
+});
+
+// ---- Switch to edit mode, pre-filling current values ----
+document.getElementById("editBtn").addEventListener("click", () => {
+  document.getElementById("e-spec").value = current.spec;
+  document.getElementById("e-city").value = current.city;
+  document.getElementById("e-mobile").value = current.mobile;
+  document.getElementById("e-email").value = current.email;
+  document.getElementById("e-status").value = current.active ? "Active" : "Inactive";
+
+  viewMode.classList.add("hidden");
+  editMode.classList.remove("hidden");
+});
+
+document.getElementById("cancelEdit").addEventListener("click", () => {
+  editMode.classList.add("hidden");
+  viewMode.classList.remove("hidden");
+});
+
+// ---- Save edits back into the data array + re-render ----
+document.getElementById("saveEdit").addEventListener("click", () => {
+  // basic validation - don't allow empty required fields
+  const spec = document.getElementById("e-spec").value.trim();
+  const city = document.getElementById("e-city").value.trim();
+  if (!spec || !city) {
+    alert("Specialization and city can't be empty.");
+    return;
+  }
+
+  current.spec = spec;
+  current.city = city;
+  current.mobile = document.getElementById("e-mobile").value.trim();
+  current.email = document.getElementById("e-email").value.trim();
+  current.active = document.getElementById("e-status").value === "Active";
+
+  // In a real app, this is where you'd call your API to persist the change:
+  // await fetch(`/api/doctors/${current.code}`, { method: "PATCH", body: JSON.stringify(current) });
+
+  renderRows();
+  openDrawer(current); // refresh the drawer to show saved values in view mode
+});
+
+// ---- Initial render ----
+renderRows();
+
+</script>
+</body>
+</html>
