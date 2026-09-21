@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basic Prototype</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f2f1ec;
+  padding: 40px 20px;
+  color: #1f1f1d;
+}
+
+.card {
+  max-width: 640px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #e2e0d8;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e0d8;
+}
+
+.title {
+  font-weight: 500;
+  font-size: 15px;
+  margin: 0;
+}
+
+.muted {
+  color: #6b6a63;
+  font-weight: 400;
+}
+
+/* Bulk action bar */
+.action-bar {
+  display: none; /* toggled to flex by script.js when rows are selected */
+  align-items: center;
+  gap: 12px;
+  background: #e6f1fb;
+  padding: 10px 16px;
+  border-bottom: 1px solid #b5d4f4;
+}
+
+.action-bar.visible {
+  display: flex;
+}
+
+.check-icon {
+  color: #185fa5;
+  font-size: 14px;
+}
+
+.selected-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #185fa5;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.action-bar button,
+.modal-actions button {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #cfcdc4;
+  background: #fff;
+  cursor: pointer;
+}
+
+.action-bar button:hover,
+.modal-actions button:hover {
+  background: #f5f4ef;
+}
+
+.action-bar button.ghost {
+  border-color: transparent;
+  color: #6b6a63;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px 12px;
+}
+
+thead th {
+  color: #6b6a63;
+  font-weight: 400;
+  border-bottom: 1px solid #e2e0d8;
+}
+
+tbody tr {
+  border-bottom: 1px solid #e2e0d8;
+}
+
+.checkbox-col {
+  width: 36px;
+}
+
+.due-date {
+  color: #6b6a63;
+}
+
+/* Modal overlay */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.overlay.visible {
+  display: flex;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e0d8;
+  width: 320px;
+  padding: 20px;
+}
+
+.modal-title {
+  font-weight: 500;
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: #6b6a63;
+  margin: 0 0 16px;
+}
+
+.modal select,
+.modal input[type="number"] {
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid #cfcdc4;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+#assigneeSelect {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.shift-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.shift-row input {
+  width: 70px;
+}
+
+.shift-row select {
+  flex: 1;
+}
+
+.example {
+  font-size: 12px;
+  color: #8a897f;
+  margin: 0 0 16px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-actions .apply {
+  background: #185fa5;
+  color: #fff;
+  border: none;
+}
+
+.modal-actions .apply:hover {
+  background: #0c447c;
+}
+
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="header">
+    <p class="title">Appointment List</span></p>
+  </div>
+
+  <!-- Bulk action bar: only shown when 1+ rows are checked -->
+  <div class="action-bar" id="actionBar">
+    <span class="check-icon">&#10003;</span>
+    <span class="selected-label" id="selectedLabel">0 selected</span>
+    <div class="spacer"></div>
+    <button id="btnAssignee">Change assignee</button>
+    <button id="btnDate">Shift due dates</button>
+    <button id="btnClear" class="ghost">Clear</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="checkbox-col"><input type="checkbox" id="selectAll"></th>
+        <th>Assignee</th>
+        <th>Due date</th>
+      </tr>
+    </thead>
+    <tbody id="rows">
+      <!-- rows injected by script.js -->
+    </tbody>
+  </table>
+
+</div>
+
+<!-- Change assignee modal -->
+<div class="overlay" id="overlayAssignee">
+  <div class="modal">
+    <p class="modal-title">Change assignee</p>
+    <p class="modal-desc">One new assignee applied to all <span id="countAssignee">0</span> selected appointments.</p>
+    <select id="assigneeSelect">
+      <option>Priya Nair</option>
+      <option>Amit Verma</option>
+      <option>Sonu Singh</option>
+    </select>
+    <div class="modal-actions">
+      <button class="cancel" data-target="overlayAssignee">Cancel</button>
+      <button class="apply" id="applyAssignee">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shift due dates modal -->
+<div class="overlay" id="overlayDate">
+  <div class="modal">
+    <p class="modal-title">Shift due dates</p>
+    <p class="modal-desc">Each appointment keeps its own date, shifted by the same amount.</p>
+    <div class="shift-row">
+      <input type="number" id="shiftAmount" value="3" min="-365" max="365">
+      <span>days</span>
+      <select id="shiftDirection">
+        <option value="1">Later</option>
+        <option value="-1">Earlier</option>
+      </select>
+    </div>
+    <p class="example" id="shiftExample"></p>
+    <div class="modal-actions">
+      <button class="cancel" data-target="overlayDate">Cancel</button>
+      <button class="apply" id="applyDate">Apply</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  // ---- Sample data ----
+// In a real app this would come from your API/database.
+// Note each row has ITS OWN due date - that's the whole point of "shift" vs "set".
+const rows = [
+  { id: 1, assignee: "Sonu Singh", dueDate: new Date("2026-09-16") },
+  { id: 2, assignee: "Sonu Singh", dueDate: new Date("2026-09-15") },
+  { id: 3, assignee: "Sonu Singh", dueDate: new Date("2026-09-14") },
+  { id: 4, assignee: "Sonu Singh", dueDate: new Date("2026-09-12") },
+];
+
+const rowsBody = document.getElementById("rows");
+const actionBar = document.getElementById("actionBar");
+const selectedLabel = document.getElementById("selectedLabel");
+const selectAllCheckbox = document.getElementById("selectAll");
+
+const overlayAssignee = document.getElementById("overlayAssignee");
+const overlayDate = document.getElementById("overlayDate");
+
+function formatDate(date) {
+  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+// ---- Render table rows from the `rows` array ----
+function renderRows() {
+  rowsBody.innerHTML = rows.map(r => `
+    <tr data-id="${r.id}">
+      <td><input type="checkbox" class="row-check" data-id="${r.id}"></td>
+      <td class="assignee-cell">${r.assignee}</td>
+      <td class="due-date">${formatDate(r.dueDate)}</td>
+    </tr>
+  `).join("");
+
+  // wire up row checkboxes after re-render
+  document.querySelectorAll(".row-check").forEach(cb => {
+    cb.addEventListener("change", updateActionBar);
+  });
+}
+
+// ---- Figure out which row ids are checked ----
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll(".row-check:checked"))
+    .map(cb => Number(cb.dataset.id));
+}
+
+// ---- Show/hide the bulk action bar based on selection count ----
+function updateActionBar() {
+  const selected = getSelectedIds();
+  if (selected.length > 0) {
+    actionBar.classList.add("visible");
+    selectedLabel.textContent = `${selected.length} selected`;
+  } else {
+    actionBar.classList.remove("visible");
+  }
+}
+
+// ---- "Select all" checkbox toggles every row checkbox ----
+selectAllCheckbox.addEventListener("change", () => {
+  document.querySelectorAll(".row-check").forEach(cb => {
+    cb.checked = selectAllCheckbox.checked;
+  });
+  updateActionBar();
+});
+
+// ---- Clear selection ----
+document.getElementById("btnClear").addEventListener("click", () => {
+  document.querySelectorAll(".row-check").forEach(cb => cb.checked = false);
+  selectAllCheckbox.checked = false;
+  updateActionBar();
+});
+
+// ---- Open "Change assignee" modal ----
+document.getElementById("btnAssignee").addEventListener("click", () => {
+  document.getElementById("countAssignee").textContent = getSelectedIds().length;
+  overlayAssignee.classList.add("visible");
+});
+
+// ---- Open "Shift due dates" modal ----
+document.getElementById("btnDate").addEventListener("click", () => {
+  updateShiftExample();
+  overlayDate.classList.add("visible");
+});
+
+// ---- Close any modal via its Cancel button ----
+document.querySelectorAll(".cancel").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.getElementById(btn.dataset.target).classList.remove("visible");
+  });
+});
+
+// ---- Apply: Change assignee ----
+// Sets the SAME new assignee on every selected row. This is safe because
+// "assignee" is a single value that should genuinely be identical for all.
+document.getElementById("applyAssignee").addEventListener("click", () => {
+  const newAssignee = document.getElementById("assigneeSelect").value;
+  const selectedIds = getSelectedIds();
+
+  rows.forEach(r => {
+    if (selectedIds.includes(r.id)) {
+      r.assignee = newAssignee;
+    }
+  });
+
+  renderRows();
+  reapplySelection(selectedIds);
+  overlayAssignee.classList.remove("visible");
+});
+
+// ---- Apply: Shift due dates ----
+// Adds/subtracts N days to EACH row's own existing date, rather than
+// overwriting everyone with one fixed date. This is the key fix for
+// "everyone has a different due date" scenarios.
+document.getElementById("applyDate").addEventListener("click", () => {
+  const amount = Number(document.getElementById("shiftAmount").value) || 0;
+  const direction = Number(document.getElementById("shiftDirection").value); // 1 or -1
+  const selectedIds = getSelectedIds();
+
+  rows.forEach(r => {
+    if (selectedIds.includes(r.id)) {
+      const shifted = new Date(r.dueDate);
+      shifted.setDate(shifted.getDate() + amount * direction);
+      r.dueDate = shifted;
+    }
+  });
+
+  renderRows();
+  reapplySelection(selectedIds);
+  overlayDate.classList.remove("visible");
+});
+
+// ---- Live example text inside the shift modal ----
+function updateShiftExample() {
+  const amount = Number(document.getElementById("shiftAmount").value) || 0;
+  const direction = Number(document.getElementById("shiftDirection").value);
+  const selectedIds = getSelectedIds();
+  const sample = rows.filter(r => selectedIds.includes(r.id)).slice(0, 3);
+
+  const parts = sample.map(r => {
+    const shifted = new Date(r.dueDate);
+    shifted.setDate(shifted.getDate() + amount * direction);
+    return `${formatDate(r.dueDate)} \u2192 ${formatDate(shifted)}`;
+  });
+
+  document.getElementById("shiftExample").textContent =
+    parts.length ? `Example: ${parts.join(", ")}` : "";
+}
+
+document.getElementById("shiftAmount").addEventListener("input", updateShiftExample);
+document.getElementById("shiftDirection").addEventListener("change", updateShiftExample);
+
+// ---- Re-check the rows that were selected before a re-render ----
+function reapplySelection(ids) {
+  ids.forEach(id => {
+    const cb = document.querySelector(`.row-check[data-id="${id}"]`);
+    if (cb) cb.checked = true;
+  });
+  updateActionBar();
+}
+
+// ---- Initial render: start with all rows selected, to match the mockup ----
+renderRows();
+document.querySelectorAll(".row-check").forEach(cb => cb.checked = true);
+selectAllCheckbox.checked = true;
+updateActionBar();
+</script>
+</body>
+</html>
